@@ -1,3 +1,7 @@
+"""
+This module connects to a running mariadb service, loads a xml TEI corpus and tries to
+run the ETL pipeline.
+"""
 import os
 
 from dotenv import load_dotenv
@@ -13,10 +17,6 @@ DB_PASSWORD = os.getenv("TT_DB_PASSWORD")
 DB_HOST = os.getenv("TT_DB_HOST")
 DB_PORT = os.getenv("TT_DB_PORT")
 DB_NAME = os.getenv("TT_DB_NAME")
-# get env vars specifying service
-APP_SPEC_DIR = os.getenv("TT_APP_SPEC_DIR", "openapi/")
-APP_SPEC_FILE = os.getenv("TT_APP_SPEC_FILE")
-APP_PORT = int(os.getenv("TT_APP_PORT"))
 
 # connect to db and initialize parser
 PARSER = TeiXmlParser(

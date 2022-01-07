@@ -1,3 +1,10 @@
+"""
+This module connects to a running mariadb service, starts a flask microservice
+according to the openapi3 schema defined in $TT_APP_SPEC_DIR/$TT_APP_SPEC_FILE
+using connexion.
+This service should the offer at least one endpoint to start the ETL pipeline for a
+provided TEI xml corpus.
+"""
 import os
 
 import connexion
