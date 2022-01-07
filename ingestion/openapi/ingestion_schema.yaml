@@ -1,0 +1,69 @@
+openapi: 3.0.1
+info:
+  title: TT Ingestion
+  description: ""
+  contact:
+    email: chris.schaller@posteo.de
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 0.0.1
+tags:
+  - name: ingest
+paths:
+  /ingest:
+    post:
+      summary: Ingest TEI corpus
+      operationId: app.ingest
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                xml_string:
+                  type: string
+          text/plain:
+            schema:
+              type: string
+#              $ref: '#/components/schemas/TEI_string'
+      tags:
+        - ingest
+      responses:
+#        200:
+#          description: bla
+#          content:
+#            application/json:
+#              schema:
+#                $ref: ""
+        405:
+          description: Invalid input
+          content: {}
+      x-codegen-request-body-name: body
+components:
+  schemas:
+    TEI:
+      required:
+        - teiHeader
+        - text
+      type: object
+      properties:
+        teiHeader:
+          type: object
+          properties:
+            fileDesc:
+              type: object
+            encodingDesc:
+              type: object
+            profileDesc:
+              type: object
+        text:
+          type: object
+          properties:
+            front:
+              type: object
+            body:
+              type: object
+    TEI_string:
+      type: string

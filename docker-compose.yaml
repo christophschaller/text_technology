@@ -1,0 +1,30 @@
+version: "3"
+
+services:
+#  ingestion:
+#
+#    restart: always
+#    depends_on:
+#      - mariadb
+#    ports:
+#      - '8080:80'
+#    links:
+#      - mariadb
+  mariadb:
+    image: mariadb:10.7
+    restart: always
+    ports:
+      - '3306:3306'
+    volumes:
+      - mariadb_data:/var/lib/mysql/data
+      - mariadb_logs:/var/lib/mysql/logs
+      - mariadb_conf:/var/docker/mariadb/conf
+#      - ./data/mariadb_data:/var/lib/mysql/data
+#      - ./data/mariadb_logs:/var/lib/mysql/logs
+#      - ./data/mariadb_conf:/var/docker/mariadb/conf
+    env_file:
+      - mariadb.env
+volumes:
+  mariadb_data:
+  mariadb_logs:
+  mariadb_conf:

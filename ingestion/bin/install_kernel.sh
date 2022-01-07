@@ -1,0 +1,1 @@
+poetry run python -m ipykernel install --user --name tt_ingestion --display-name "TT Ingestion"
