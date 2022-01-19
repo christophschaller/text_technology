@@ -15,7 +15,7 @@ In this folder python requirements are managed using [poetry](https://python-poe
  - [test_parse.py](./test_parse.py) offers a quick way to run the
 [TeiXmlParser](./ingestion/tei_xml_parser.py).  
  - [app.py](./app.py) is the python entrypoint for the microservice.
-    - whenn running the microservice locally env vars can be provided in `app.env` in 
+    - when running the microservice locally env vars can be provided in `app.env` in 
       this directory.
       
 
