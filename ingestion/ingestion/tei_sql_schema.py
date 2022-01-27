@@ -65,14 +65,16 @@ class CastGroup(Base):
 class Act(Base):
     __tablename__ = "act"
 
-    id = sa.Column(sa.String(36), primary_key=True)
+    # id = sa.Column(sa.String(36), primary_key=True)
+    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True, default=0)
     content = sa.Column(sa.TEXT)
 
 
 class Scene(Base):
     __tablename__ = "scene"
 
-    id = sa.Column(sa.String(36), primary_key=True)
+    # id = sa.Column(sa.String(36), primary_key=True)
+    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True, default=0)
     act_id = sa.Column(sa.ForeignKey("act.id"))
     content = sa.Column(sa.TEXT)
 

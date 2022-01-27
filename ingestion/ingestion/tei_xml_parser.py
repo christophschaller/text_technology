@@ -3,7 +3,7 @@ This module contains the TeiXmlParser class to Extract, Load and Transform data
     from xml corpora in the TEI format into SQL databases using sqlalchemy.
 """
 import uuid
-from typing import List
+from typing import Dict, List
 
 from lxml import etree
 
@@ -67,7 +67,7 @@ class TeiXmlParser(DatabaseConnector):
         elements.extend(self.parse_cast_list(self.tree))
 
         # parse play information
-        # TODO: parse play information
+        elements.extend(self.parse_body(self.tree))
 
         self.bulk_insert(elements)
 
@@ -98,6 +98,12 @@ class TeiXmlParser(DatabaseConnector):
         elements = []
         for cast_group in tree.findall(f".//{self.xmlns('castList')}"):
             elements.extend(self.parse_cast_group(cast_group))
+
+        print("\n###PARSE CAST###\n")
+        for el in elements:
+            print(el.id, type(el))
+            print()
+
         return elements
 
     def parse_cast_group(self, cast_group: etree._Element) -> List[schema.Base]:
@@ -194,4 +200,93 @@ class TeiXmlParser(DatabaseConnector):
         )
 
     # play information
-    # TODO: define functions to parse play information
+    def parse_body(self, tree: etree._ElementTree) -> List[schema.Base]:
+        """
+        Get all act objects from the body and extract all necessary information.
+
+        Args:
+            tree: xml tree object to search for the body object.
+
+        Returns:
+            List of db objects found and transformed from the body object.
+        """
+        elements = []
+        for act in tree.findall(f".//{self.xmlns('body')}"):
+            elements.extend(self.parse_act(act))
+
+        print("\n###PARSER BODY###\n")
+        for el in elements:
+            print(el.id, type(el))
+            print()
+
+        return elements
+
+    def parse_act(self, act: etree._Element) -> List[schema.Base]:
+        act_head = act.find(f".//{self.xmlns('head')}")
+        db_act = schema.Act(
+            content=" ".join([el.strip() for el in act_head.itertext() if el.strip()]),
+        )
+        elements = [db_act]
+
+        for scene in act.findall(f".//{self.xmlns('scene')}"):
+            elements.extend(self.parse_scene(scene, act_id=db_act.id))
+        return elements
+
+    def parse_scene(self, scene: etree._Element, act_id: int) -> List[schema.Base]:
+        scene_head = scene.find(f".//{self.xmlns('head')}")
+        db_scene = schema.Scene(
+            act_id=act_id,
+            content=" ".join([el.strip() for el in scene_head.itertext() if el.strip()])
+        )
+        elements = [db_scene]
+
+        for stage in scene.findall(f".//{self.xmlns('stage')}"):
+            elements.append(self.parse_stage(stage, scene_id=db_scene.id))
+
+        for speech in scene.findall(f".//{self.xmlns('sp')}"):
+            elements.extend(self.parse_speech(speech, scene_id=db_scene.id))
+        return elements
+
+    def get_id(self, attrib: Dict) -> str:
+        id_key = [key for key in attrib.keys() if key.endswith("}id")][0]
+        return attrib[id_key]
+
+    def parse_stage(self, stage: etree._Element, scene_id: int) -> schema.Base:
+        return schema.Stage(
+            id=self.get_id(stage.attrib),
+            scene_id=scene_id,
+            content=" ".join([el.strip() for el in stage.itertext() if el.strip()]),
+            cast=stage.attrib["who"].split(),
+        )
+
+    def parse_speech(self, speech: etree._Element, scene_id: int) -> List[schema.Base]:
+        db_speech = schema.Speech(
+            id=self.get_id(speech.attrib),
+            scene_id=scene_id,
+            cast_item_id=speech.attrib["who"].split()[0]
+        )
+        elements = [db_speech]
+
+        for line in speech.findall(f".//{self.xmlns('l')}"):
+            elements.extend(self.parse_line(line, speech_id=db_speech.id))
+        return elements
+
+    def parse_line(self, line, speech_id: str) -> List[schema.Base]:
+        db_line = schema.Line(
+            id=self.get_id(line.attrib),
+            speech_id=speech_id
+        )
+        elements = [db_line]
+
+        for token in line.findall(f".//{self.xmlns('w')}"):
+            elements.append(self.parse_token(token, line_id=db_line.id))
+        return elements
+
+    def parse_token(self, token, line_id: str) -> etree._Element:
+        return schema.Token(
+            id=self.get_id(token.attrib),
+            line_id=line_id,
+            content=" ".join([el.strip() for el in token.itertext() if el.strip()]),
+            lemma=token.attrib["lemma"],
+            ana=token.attrib["ana"],
+        )
