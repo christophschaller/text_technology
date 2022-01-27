@@ -222,6 +222,15 @@ class TeiXmlParser(DatabaseConnector):
         return elements
 
     def parse_act(self, act: etree._Element) -> List[schema.Base]:
+        """
+        Parse act instance
+
+        Args:
+            act: xml subtree
+
+        Returns:
+            List of objects, containing this act and all its children.
+        """
         act_head = act.find(f".//{self.xmlns('head')}")
         db_act = schema.Act(
             content=" ".join([el.strip() for el in act_head.itertext() if el.strip()]),
@@ -233,6 +242,16 @@ class TeiXmlParser(DatabaseConnector):
         return elements
 
     def parse_scene(self, scene: etree._Element, act_id: int) -> List[schema.Base]:
+        """
+        Parse scene instance.
+
+        Args:
+            scene: xml subtree.
+            act_id: int id of parent act
+
+        Returns:
+            List of objects, containing this scene and all its children.
+        """
         scene_head = scene.find(f".//{self.xmlns('head')}")
         db_scene = schema.Scene(
             act_id=act_id,
@@ -248,10 +267,29 @@ class TeiXmlParser(DatabaseConnector):
         return elements
 
     def get_id(self, attrib: Dict) -> str:
+        """
+        Get id object contained in attrib dict.
+
+        Args:
+            attrib: dict of attributes.
+
+        Returns:
+            value of element with key ending in "id".
+        """
         id_key = [key for key in attrib.keys() if key.endswith("}id")][0]
         return attrib[id_key]
 
-    def parse_stage(self, stage: etree._Element, scene_id: int) -> schema.Base:
+    def parse_stage(self, stage: etree._Element, scene_id: int) -> schema.Stage:
+        """
+        Parse a stage instance.
+
+        Args:
+            stage: xml subtree
+            scene_id: int id of the parent scene
+
+        Returns:
+            Stage object.
+        """
         return schema.Stage(
             id=self.get_id(stage.attrib),
             scene_id=scene_id,
@@ -260,6 +298,16 @@ class TeiXmlParser(DatabaseConnector):
         )
 
     def parse_speech(self, speech: etree._Element, scene_id: int) -> List[schema.Base]:
+        """
+        Parse a speech instance.
+
+        Args:
+            speech: xml subtree
+            scene_id: int id of the parent scene
+
+        Returns:
+            List of objects containing this speech and all its children.
+        """
         db_speech = schema.Speech(
             id=self.get_id(speech.attrib),
             scene_id=scene_id,
@@ -272,6 +320,16 @@ class TeiXmlParser(DatabaseConnector):
         return elements
 
     def parse_line(self, line, speech_id: str) -> List[schema.Base]:
+        """
+        Parse a line instance.
+
+        Args:
+            line: xml subtree
+            speech_id: str id name of the parent speech
+
+        Returns:
+            List of objects containing this line and its children tokens.
+        """
         db_line = schema.Line(
             id=self.get_id(line.attrib),
             speech_id=speech_id
@@ -282,7 +340,18 @@ class TeiXmlParser(DatabaseConnector):
             elements.append(self.parse_token(token, line_id=db_line.id))
         return elements
 
-    def parse_token(self, token, line_id: str) -> etree._Element:
+    def parse_token(self, token, line_id: str) -> schema.Token:
+        """
+        Parse a single token instance, getting most of the information stored
+        in the original XML object.
+
+        Args:
+            token: xml subtree
+            line_id: str id name of the parent line
+
+        Returns:
+
+        """
         return schema.Token(
             id=self.get_id(token.attrib),
             line_id=line_id,
