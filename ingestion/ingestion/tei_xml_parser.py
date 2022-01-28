@@ -1,9 +1,12 @@
 """
 This module contains the TeiXmlParser class to Extract, Load and Transform data
     from xml corpora in the TEI format into SQL databases using sqlalchemy.
+
+    In all honesty, this is a toy project so this probably wont parse anything except
+    https://dracor.org/api/corpora/shake/play/two-gentlemen-of-verona/tei properly.
 """
 import uuid
-from typing import Dict, List
+from typing import Dict
 
 from lxml import etree
 
@@ -16,7 +19,7 @@ class TeiXmlParser(DatabaseConnector):
     Class extracting information from a xml corpus and transforming it to sqlalchemy
         objects.
         This class inherits from DatabaseConnector allowing it to directly push
-        parsed copora into the connected database.
+        parsed corpora into the connected database.
     """
 
     def __init__(self, user: str, password: str, host: str, port: str, database: str):
@@ -86,8 +89,9 @@ class TeiXmlParser(DatabaseConnector):
         """
         return f"\u007b{self.xmlns_header}\u007d{tag}"
 
-    # cast information
-    def parse_cast_list(self, tree: etree._ElementTree) -> List[schema.Base]:
+    ###
+    # parse cast information
+    def parse_cast_list(self, tree: etree._ElementTree):
         """
         Get CastList object and extract all necessary information.
 
@@ -129,7 +133,8 @@ class TeiXmlParser(DatabaseConnector):
                 cast_item, cast_group_id=db_cast_group.id))
         return elements
 
-    def get_cast_item_id(self, cast_item: etree._Element) -> str:
+    @staticmethod
+    def get_cast_item_id(cast_item: etree._Element) -> str:
         """
         Get the id of the provided CastItem object,
             or generate a uuid4 if no id can be found.
@@ -165,7 +170,7 @@ class TeiXmlParser(DatabaseConnector):
         Returns:
             List of db objects found and transformed from the CastItem object.
         """
-
+        # TODO: I have a feeling this does not work anymore...
         name_obj = cast_item.find(f"{self.xmlns('role')}/{self.xmlns('name')}")
 
         db_cast_item = schema.CastItem(
@@ -209,8 +214,9 @@ class TeiXmlParser(DatabaseConnector):
         self.insert(db_cast_role)
         return db_cast_role
 
-    # play information
-    def parse_body(self, tree: etree._ElementTree) -> List[schema.Base]:
+    ###
+    # parse play information
+    def parse_body(self, tree: etree._ElementTree):
         """
         Get all act objects from the body and extract all necessary information.
 
