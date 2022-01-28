@@ -54,19 +54,17 @@ class TeiXmlParser(DatabaseConnector):
             self.root = self.tree.getroot()
         self.xmlns_header = list(self.root.nsmap.values())[0]
 
-        elements = []
         # parse meta information
         # TODO: parse meta information
 
         # parse cast information
-        elements.extend(self.parse_cast_list(self.tree))
+        self.parse_cast_list(self.tree)
 
         # parse play information
-        elements.extend(self.parse_body(self.tree))
+        self.parse_body(self.tree)
 
-        # self.bulk_insert(elements)
-
-    # meta information
+    ###
+    # parse meta information
     def xmlns(self, tag: str) -> str:
         """
         Wrap the tag with the main namespace.
@@ -87,41 +85,24 @@ class TeiXmlParser(DatabaseConnector):
 
         Args:
             tree: xml tree object to search for CastList object.
-
-        Returns:
-            List of db objects found and transformed from the CastList object.
         """
-        elements = []
         for cast_group in tree.findall(f".//{self.xmlns('castList')}"):
-            elements.extend(self.parse_cast_group(cast_group))
+            self.parse_cast_group(cast_group)
 
-        # print("\n###PARSE CAST###\n")
-        # for el in elements:
-        #     print(el.id, type(el))
-        #     print()
-
-        return elements
-
-    def parse_cast_group(self, cast_group: etree._Element) -> List[schema.Base]:
+    def parse_cast_group(self, cast_group: etree._Element):
         """
         Extract information from CastGroup object.
 
         Args:
             cast_group: xml subtree to parse
-
-        Returns:
-            List of db objects found and transformed from the CastGroup object.
         """
         db_cast_group = schema.CastGroup(
             id=str(uuid.uuid4())
         )
-        elements = [db_cast_group]
         self.insert(db_cast_group)
 
         for cast_item in cast_group.findall(f".//{self.xmlns('castItem')}"):
-            elements.extend(self.parse_cast_item(
-                cast_item, cast_group_id=db_cast_group.id))
-        return elements
+            self.parse_cast_item(cast_item, cast_group_id=db_cast_group.id)
 
     @staticmethod
     def get_cast_item_id(cast_item: etree._Element) -> str:
@@ -148,7 +129,7 @@ class TeiXmlParser(DatabaseConnector):
         return cast_item_id
 
     def parse_cast_item(
-            self, cast_item: etree._Element, cast_group_id: str) -> List[schema.Base]:
+            self, cast_item: etree._Element, cast_group_id: str):
         """
         Extract information from CastItem object.
 
@@ -156,9 +137,6 @@ class TeiXmlParser(DatabaseConnector):
             cast_item: CastItem xml subtree
             cast_group_id: int id of the respective CastGroup object the CastItem
                 belongs to
-
-        Returns:
-            List of db objects found and transformed from the CastItem object.
         """
         # TODO: I have a feeling this does not work anymore...
         name_obj = cast_item.find(f"{self.xmlns('role')}/{self.xmlns('name')}")
@@ -171,14 +149,9 @@ class TeiXmlParser(DatabaseConnector):
         )
         self.insert(db_cast_item)
         self.temp_cast[db_cast_item.id] = db_cast_item
-        elements = [
-            db_cast_item,
-            self.parse_cast_role(
-                cast_item=cast_item, cast_item_id=db_cast_item.id)]
-        return elements
+        self.parse_cast_role(cast_item=cast_item, cast_item_id=db_cast_item.id)
 
-    def parse_cast_role(
-            self, cast_item: etree._Element, cast_item_id: str) -> schema.CastRole:
+    def parse_cast_role(self, cast_item: etree._Element, cast_item_id: str):
         """
         Extract information from CastRole object.
 
@@ -186,9 +159,6 @@ class TeiXmlParser(DatabaseConnector):
             cast_item: CastItem xml subtree the Role and RoleDescription objects are
                 contained id.
             cast_item_id: string id of the respective CastItem object.
-
-        Returns:
-            List of db objects found and transformed from the CastItem object.
         """
         content = " ".join([el.strip() for el in cast_item.itertext() if el.strip()])
         name_obj = cast_item.find(f"{self.xmlns('role')}/{self.xmlns('name')}")
@@ -202,7 +172,6 @@ class TeiXmlParser(DatabaseConnector):
             description=desc_obj.text if desc_obj else ""
         )
         self.insert(db_cast_role)
-        return db_cast_role
 
     ###
     # parse play information
@@ -212,56 +181,37 @@ class TeiXmlParser(DatabaseConnector):
 
         Args:
             tree: xml tree object to search for the body object.
-
-        Returns:
-            List of db objects found and transformed from the body object.
         """
-        elements = []
         body = tree.find(f".//{self.xmlns('body')}")
         act_query = self.xmlns("div[@type='act']")
         for act in body.findall(f".//{act_query}"):
-            elements.extend(self.parse_act(act))
+            self.parse_act(act)
 
-        # print("\n###PARSER BODY###\n")
-        # for el in elements:
-        #     print(el.id, type(el))
-        #     print()
-
-        return elements
-
-    def parse_act(self, act: etree._Element) -> List[schema.Base]:
+    def parse_act(self, act: etree._Element):
         """
         Parse act instance
 
         Args:
             act: xml subtree
-
-        Returns:
-            List of objects, containing this act and all its children.
         """
         act_head = act.find(f".//{self.xmlns('head')}")
         db_act = schema.Act(
             id=str(uuid.uuid4()),
             content=" ".join([el.strip() for el in act_head.itertext() if el.strip()]),
         )
-        elements = [db_act]
         self.insert(db_act)
 
         scene_query = self.xmlns("div[@type='scene']")
         for scene in act.findall(f".//{scene_query}"):
-            elements.extend(self.parse_scene(scene, act_id=db_act.id))
-        return elements
+            self.parse_scene(scene, act_id=db_act.id)
 
-    def parse_scene(self, scene: etree._Element, act_id: str) -> List[schema.Base]:
+    def parse_scene(self, scene: etree._Element, act_id: str):
         """
         Parse scene instance.
 
         Args:
             scene: xml subtree.
             act_id: int id of parent act
-
-        Returns:
-            List of objects, containing this scene and all its children.
         """
         scene_head = scene.find(f".//{self.xmlns('head')}")
         db_scene = schema.Scene(
@@ -269,18 +219,17 @@ class TeiXmlParser(DatabaseConnector):
             act_id=act_id,
             content=" ".join([el.strip() for el in scene_head.itertext() if el.strip()])
         )
-        elements = [db_scene]
         self.insert(db_scene)
 
         stage_query = self.xmlns('stage[@who]')
         for stage in scene.findall(f".//{stage_query}"):
-            elements.append(self.parse_stage(stage, scene_id=db_scene.id))
+            self.parse_stage(stage, scene_id=db_scene.id)
 
         for speech in scene.findall(f".//{self.xmlns('sp')}"):
-            elements.extend(self.parse_speech(speech, scene_id=db_scene.id))
-        return elements
+            self.parse_speech(speech, scene_id=db_scene.id)
 
-    def get_id(self, attrib: Dict) -> str:
+    @staticmethod
+    def get_id(attrib: Dict) -> str:
         """
         Get id object contained in attrib dict.
 
@@ -293,16 +242,13 @@ class TeiXmlParser(DatabaseConnector):
         id_key = [key for key in attrib.keys() if key.endswith("}id")][0]
         return attrib[id_key]
 
-    def parse_stage(self, stage: etree._Element, scene_id: str) -> schema.Stage:
+    def parse_stage(self, stage: etree._Element, scene_id: str):
         """
         Parse a stage instance.
 
         Args:
             stage: xml subtree
             scene_id: int id of the parent scene
-
-        Returns:
-            Stage object.
         """
         db_stage = schema.Stage(
             id=self.get_id(stage.attrib),
@@ -312,9 +258,8 @@ class TeiXmlParser(DatabaseConnector):
                   for cast in stage.attrib["who"].split()],
         )
         self.insert(db_stage)
-        return db_stage
 
-    def parse_speech(self, speech: etree._Element, scene_id: str) -> List[schema.Base]:
+    def parse_speech(self, speech: etree._Element, scene_id: str):
         """
         Parse a speech instance.
 
@@ -330,36 +275,30 @@ class TeiXmlParser(DatabaseConnector):
             scene_id=scene_id,
             cast_item_id=speech.attrib["who"].split()[0].strip("#")
         )
-        elements = [db_speech]
         self.insert(db_speech)
 
         for line in speech.findall(f".//{self.xmlns('l')}"):
-            elements.extend(self.parse_line(line, speech_id=db_speech.id))
-        return elements
+            self.parse_line(line, speech_id=db_speech.id)
 
-    def parse_line(self, line, speech_id: str) -> List[schema.Base]:
+    def parse_line(self, line, speech_id: str):
         """
         Parse a line instance.
 
         Args:
             line: xml subtree
             speech_id: str id name of the parent speech
-
-        Returns:
-            List of objects containing this line and its children tokens.
         """
         db_line = schema.Line(
             id=self.get_id(line.attrib),
             speech_id=speech_id
         )
-        elements = [db_line]
         self.insert(db_line)
 
-        for token in line.findall(f".//{self.xmlns('w')}"):
-            elements.append(self.parse_token(token, line_id=db_line.id))
-        return elements
+        token_query = self.xmlns('w[@lemma]')
+        for token in line.findall(f".//{token_query}"):
+            self.parse_token(token, line_id=db_line.id)
 
-    def parse_token(self, token, line_id: str) -> schema.Token:
+    def parse_token(self, token, line_id: str):
         """
         Parse a single token instance, getting most of the information stored
         in the original XML object.
@@ -367,9 +306,6 @@ class TeiXmlParser(DatabaseConnector):
         Args:
             token: xml subtree
             line_id: str id name of the parent line
-
-        Returns:
-
         """
         db_token = schema.Token(
             id=self.get_id(token.attrib),
@@ -379,4 +315,3 @@ class TeiXmlParser(DatabaseConnector):
             ana=token.attrib["ana"],
         )
         self.insert(db_token)
-        return db_token
