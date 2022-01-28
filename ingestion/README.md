@@ -4,6 +4,15 @@ This subfolder contains the **Ingestion Microservice** defining a ETL pipeline t
 **E**xtract TEI formatted xml corpora, **T**ransform them to sql objects with 
 sqlalchemy and **L**oad them into a connected mariadb.
 
+## Completeness
+This won't parse the complete information contained in the source XML files.  
+It will extract enough information to play around with the characters of the play,
+their speeches, the acts etc. but won't capture every detail contained in the source.  
+This is done to reduce the complexity of the parser, as this is a toy project.  
+
+Also, the parsing is slow as f**k, this is caused by every item being inserted by 
+its own. Which is a lazy and bad decision I made due to not wanting to spent time on 
+bulk insertion.
 
 ## Quickstart
 
