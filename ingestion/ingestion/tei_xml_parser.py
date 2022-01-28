@@ -38,17 +38,7 @@ class TeiXmlParser(DatabaseConnector):
 
         self.temp_cast = {}
 
-    def __call__(self, xml_string: str) -> None:
-        """
-        Sugar to allow directly calling the parser object.
-        Just calls self.parse_and_push
-
-        Args:
-            xml_string: string containing xml corpus
-        """
-        self.parse_and_push(xml_string)
-
-    def parse_and_push(self, xml_string: str) -> None:
+    def parse(self, xml_string: str):
         """
         Extract the content from the xml corpus, transform it to sqlalchemy objects and
             load it into the connected database.

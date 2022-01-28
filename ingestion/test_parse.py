@@ -36,4 +36,4 @@ if __name__ == '__main__':
     # load corpus from data dir and initiate parser
     with open("../data/corpus.xml") as file_pointer:
         xml_string = file_pointer.read()
-        PARSER(xml_string)
+        PARSER.parse(xml_string)
