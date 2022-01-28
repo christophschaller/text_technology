@@ -31,6 +31,8 @@ if __name__ == '__main__':
     # create defined schema in database
     # this is probably pretty dumb to do on every startup...
     # TODO: only do this when no database is present
+    #   It wont cause direct issues if you do,
+    #   but outside of a toy project you shouldn't do this
     Base.metadata.create_all(PARSER.engine)
 
     # load corpus from data dir and initiate parser
