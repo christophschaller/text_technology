@@ -70,6 +70,16 @@ class DatabaseConnector:
         self.session.add(element)
         self.session.commit()
 
+    def merge(self, element: Base) -> None:
+        """
+        Insert a db object.
+
+        Args:
+            element: db object inheriting from Base specified in tei_sql_schema
+        """
+        self.session.merge(element)
+        self.session.commit()
+
     def bulk_insert(self, elements: List[Base]) -> None:
         """
         Insert a list of db objects.
