@@ -33,6 +33,8 @@ class TeiXmlParser(DatabaseConnector):
         self.root = None
         self.xmlns_header = None
 
+        self.temp_cast = {}
+
     def __call__(self, xml_string: str) -> None:
         """
         Sugar to allow directly calling the parser object.
@@ -69,7 +71,7 @@ class TeiXmlParser(DatabaseConnector):
         # parse play information
         elements.extend(self.parse_body(self.tree))
 
-        self.bulk_insert(elements)
+        # self.bulk_insert(elements)
 
     # meta information
     def xmlns(self, tag: str) -> str:
@@ -99,10 +101,10 @@ class TeiXmlParser(DatabaseConnector):
         for cast_group in tree.findall(f".//{self.xmlns('castList')}"):
             elements.extend(self.parse_cast_group(cast_group))
 
-        print("\n###PARSE CAST###\n")
-        for el in elements:
-            print(el.id, type(el))
-            print()
+        # print("\n###PARSE CAST###\n")
+        # for el in elements:
+        #     print(el.id, type(el))
+        #     print()
 
         return elements
 
@@ -116,8 +118,11 @@ class TeiXmlParser(DatabaseConnector):
         Returns:
             List of db objects found and transformed from the CastGroup object.
         """
-        db_cast_group = schema.CastGroup()
+        db_cast_group = schema.CastGroup(
+            id=str(uuid.uuid4())
+        )
         elements = [db_cast_group]
+        self.insert(db_cast_group)
 
         for cast_item in cast_group.findall(f".//{self.xmlns('castItem')}"):
             elements.extend(self.parse_cast_item(
@@ -148,7 +153,7 @@ class TeiXmlParser(DatabaseConnector):
         return cast_item_id
 
     def parse_cast_item(
-            self, cast_item: etree._Element, cast_group_id: int) -> List[schema.Base]:
+            self, cast_item: etree._Element, cast_group_id: str) -> List[schema.Base]:
         """
         Extract information from CastItem object.
 
@@ -164,11 +169,13 @@ class TeiXmlParser(DatabaseConnector):
         name_obj = cast_item.find(f"{self.xmlns('role')}/{self.xmlns('name')}")
 
         db_cast_item = schema.CastItem(
-            id=self.get_cast_item_id(cast_item),
+            id=self.get_cast_item_id(cast_item).strip("#"),
             cast_group_id=cast_group_id,
             content=" ".join([el.strip() for el in cast_item.itertext() if el.strip()]),
             name=name_obj.text if name_obj else ""
         )
+        self.insert(db_cast_item)
+        self.temp_cast[db_cast_item.id] = db_cast_item
         elements = [
             db_cast_item,
             self.parse_cast_role(
@@ -192,12 +199,15 @@ class TeiXmlParser(DatabaseConnector):
         name_obj = cast_item.find(f"{self.xmlns('role')}/{self.xmlns('name')}")
         desc_obj = cast_item.find(f"{self.xmlns('roleDesc')}")
 
-        return schema.CastRole(
+        db_cast_role = schema.CastRole(
+            id=str(uuid.uuid4()),
             cast_item_id=cast_item_id or cast_item.attrib.get("sameAs"),
             content=content,
             name=name_obj.text if name_obj else "",
             description=desc_obj.text if desc_obj else ""
         )
+        self.insert(db_cast_role)
+        return db_cast_role
 
     # play information
     def parse_body(self, tree: etree._ElementTree) -> List[schema.Base]:
@@ -211,13 +221,15 @@ class TeiXmlParser(DatabaseConnector):
             List of db objects found and transformed from the body object.
         """
         elements = []
-        for act in tree.findall(f".//{self.xmlns('body')}"):
+        body = tree.find(f".//{self.xmlns('body')}")
+        act_query = self.xmlns("div[@type='act']")
+        for act in body.findall(f".//{act_query}"):
             elements.extend(self.parse_act(act))
 
-        print("\n###PARSER BODY###\n")
-        for el in elements:
-            print(el.id, type(el))
-            print()
+        # print("\n###PARSER BODY###\n")
+        # for el in elements:
+        #     print(el.id, type(el))
+        #     print()
 
         return elements
 
@@ -233,15 +245,18 @@ class TeiXmlParser(DatabaseConnector):
         """
         act_head = act.find(f".//{self.xmlns('head')}")
         db_act = schema.Act(
+            id=str(uuid.uuid4()),
             content=" ".join([el.strip() for el in act_head.itertext() if el.strip()]),
         )
         elements = [db_act]
+        self.insert(db_act)
 
-        for scene in act.findall(f".//{self.xmlns('scene')}"):
+        scene_query = self.xmlns("div[@type='scene']")
+        for scene in act.findall(f".//{scene_query}"):
             elements.extend(self.parse_scene(scene, act_id=db_act.id))
         return elements
 
-    def parse_scene(self, scene: etree._Element, act_id: int) -> List[schema.Base]:
+    def parse_scene(self, scene: etree._Element, act_id: str) -> List[schema.Base]:
         """
         Parse scene instance.
 
@@ -254,12 +269,15 @@ class TeiXmlParser(DatabaseConnector):
         """
         scene_head = scene.find(f".//{self.xmlns('head')}")
         db_scene = schema.Scene(
+            id=str(uuid.uuid4()),
             act_id=act_id,
             content=" ".join([el.strip() for el in scene_head.itertext() if el.strip()])
         )
         elements = [db_scene]
+        self.insert(db_scene)
 
-        for stage in scene.findall(f".//{self.xmlns('stage')}"):
+        stage_query = self.xmlns('stage[@who]')
+        for stage in scene.findall(f".//{stage_query}"):
             elements.append(self.parse_stage(stage, scene_id=db_scene.id))
 
         for speech in scene.findall(f".//{self.xmlns('sp')}"):
@@ -279,7 +297,7 @@ class TeiXmlParser(DatabaseConnector):
         id_key = [key for key in attrib.keys() if key.endswith("}id")][0]
         return attrib[id_key]
 
-    def parse_stage(self, stage: etree._Element, scene_id: int) -> schema.Stage:
+    def parse_stage(self, stage: etree._Element, scene_id: str) -> schema.Stage:
         """
         Parse a stage instance.
 
@@ -290,14 +308,17 @@ class TeiXmlParser(DatabaseConnector):
         Returns:
             Stage object.
         """
-        return schema.Stage(
+        db_stage = schema.Stage(
             id=self.get_id(stage.attrib),
             scene_id=scene_id,
             content=" ".join([el.strip() for el in stage.itertext() if el.strip()]),
-            cast=stage.attrib["who"].split(),
+            cast=[self.temp_cast[cast.strip("#")]
+                  for cast in stage.attrib["who"].split()],
         )
+        self.insert(db_stage)
+        return db_stage
 
-    def parse_speech(self, speech: etree._Element, scene_id: int) -> List[schema.Base]:
+    def parse_speech(self, speech: etree._Element, scene_id: str) -> List[schema.Base]:
         """
         Parse a speech instance.
 
@@ -311,9 +332,10 @@ class TeiXmlParser(DatabaseConnector):
         db_speech = schema.Speech(
             id=self.get_id(speech.attrib),
             scene_id=scene_id,
-            cast_item_id=speech.attrib["who"].split()[0]
+            cast_item_id=speech.attrib["who"].split()[0].strip("#")
         )
         elements = [db_speech]
+        self.insert(db_speech)
 
         for line in speech.findall(f".//{self.xmlns('l')}"):
             elements.extend(self.parse_line(line, speech_id=db_speech.id))
@@ -335,6 +357,7 @@ class TeiXmlParser(DatabaseConnector):
             speech_id=speech_id
         )
         elements = [db_line]
+        self.insert(db_line)
 
         for token in line.findall(f".//{self.xmlns('w')}"):
             elements.append(self.parse_token(token, line_id=db_line.id))
@@ -352,10 +375,12 @@ class TeiXmlParser(DatabaseConnector):
         Returns:
 
         """
-        return schema.Token(
+        db_token = schema.Token(
             id=self.get_id(token.attrib),
             line_id=line_id,
             content=" ".join([el.strip() for el in token.itertext() if el.strip()]),
             lemma=token.attrib["lemma"],
             ana=token.attrib["ana"],
         )
+        self.insert(db_token)
+        return db_token
