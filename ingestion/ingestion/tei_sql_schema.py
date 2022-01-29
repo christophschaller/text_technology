@@ -1,6 +1,9 @@
 """
 This module contains class definitions for the tables storing objects transformed from
     TEI format xml corpora.
+
+    In all honesty, this is a toy project so this probably wont describe  anything
+    except https://dracor.org/api/corpora/shake/play/two-gentlemen-of-verona/tei
 """
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -24,17 +27,15 @@ class CastItem(Base):
     __tablename__ = "cast_item"
 
     id = sa.Column(sa.String(36), primary_key=True)
-    # TODO: most of the current relationships are one directional
+    # TODO: most of the current relationships are one to many
     #  -> figure out where bidrectional relationships are necessary
-    # cast_roles = relationship("CastRole", back_populates="cast_item")
-    cast_group_id = sa.Column(sa.Integer, sa.ForeignKey("cast_group.id"))
+    cast_group_id = sa.Column(sa.ForeignKey("cast_group.id"))
     name = sa.Column(sa.TEXT)
     content = sa.Column(sa.TEXT)
-    # TODO: corresp attrib missing+
+    # TODO: corresp. attrib missing
     stages = relationship(
         "Stage",
         secondary=cast_stage_association_table,
-        # back_populates="stage"
         backref="stage"
     )
 
@@ -42,11 +43,7 @@ class CastItem(Base):
 class CastRole(Base):
     __tablename__ = "cast_role"
 
-    # TODO: most of the other primary keys are of type String to directly use the ids
-    #  from the xml document -> find a way to generate unique string keys
-    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True, default=0)
-    # id = sa.Column(sa.String(36), primary_key=True)
-    # cast_item = relationship("CastItem", back_populates="cast_roles")
+    id = sa.Column(sa.String(36), primary_key=True)
     cast_item_id = sa.Column(sa.ForeignKey("cast_item.id"))
     name = sa.Column(sa.TEXT)
     content = sa.Column(sa.TEXT)
@@ -56,9 +53,7 @@ class CastRole(Base):
 class CastGroup(Base):
     __tablename__ = "cast_group"
 
-    # TODO: most of the other primary keys are of type String to directly use the ids
-    #  from the xml document -> find a way to generate unique string keys
-    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True, default=0)
+    id = sa.Column(sa.String(36), primary_key=True)
 
 
 # play information
@@ -86,7 +81,6 @@ class Stage(Base):
     cast = relationship(
         "CastItem",
         secondary=cast_stage_association_table,
-        # back_populates="cast_item"
         backref="cast_item"
     )
 

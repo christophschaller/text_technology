@@ -37,7 +37,7 @@ PARSER = TeiXmlParser(
 
 
 def ingest(xml_string=None):
-    PARSER(xml_string)
+    PARSER.parse(xml_string)
 
 
 if __name__ == '__main__':
