@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container" style=" width: 1000px; margin: 0 auto;">
+    <div class="row">
+        <!-- Left col -->
+       <div class="col-sm-2 col-md-2 col-lg-2 col-xs-2">
+            <!--drop down-->
+            <br><br><br>
+            <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                select query
+                </button>
+                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                    <a class="dropdown-item" href="../query/cast_group">Cast Group</a>
+                    <a class="dropdown-item" href="../query/cast_role">Cast Role</a>
+                    <a class="dropdown-item" href="../query/act">Act</a>
+                    <a class="dropdown-item" href="../query/scene">Scene</a>
+                    <a class="dropdown-item" href="../query/speech">Speech</a>
+                    <a class="dropdown-item" href="../query/line">Line</a>
+                    <a class="dropdown-item" href="../query/token">Token</a>
+                </div>
+            </div>
+       </div>
+  
+       <!-- Right col -->
+       <div class="col-sm-10 col-md-10 col-lg-10 col-xs-10">
+            <!-- search bar -->
+            <br><br><br>
+            <form class="d-flex" action="../result/cast_role" method="POST">
+                <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search" name="query">
+                <button class="btn btn-outline-success" type="submit">Search</button>
+            </form>
+       </div>
+    </div>
+</div>
+
+<br><br><br>
+<div class="container" style=" width: 1000px; margin: 0 auto;">
+    <table class="table">
+        <thead>
+            <tr class="thead-dark">
+                <th style="text-align:center">INDEX</th>
+                <th style="text-align:center">ID</th>
+                <th style="text-align:center">CAST-ITEM-ID</th>
+                <th style="text-align:center">CONTENT</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% if cast_role %}
+        {% for a in cast_role %}
+            <tr>
+                <td style="text-align:center">{{ loop.index }}</td>
+                <td style="text-align:center">{{ a.id }}</td>
+                <td style="text-align:center">{{ a.cast_item_id }}</td>
+                <td style="text-align:center">{{ a.content }}</td>
+            </tr>
+        {% endfor %}
+        {% else %}
+            <tr>
+                <td colspan="3">No result retrieved.</td>
+            </tr>
+        {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

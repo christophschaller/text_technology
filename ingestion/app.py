@@ -17,6 +17,8 @@ from ingestion.tei_sql_schema import Base
 load_dotenv("app.env")
 # get env vars specifying database connection
 DB_USER = os.getenv("TT_DB_USER")
+print(os.getenv("TT_DB_USER"))
+print(DB_USER)
 DB_PASSWORD = os.getenv("TT_DB_PASSWORD")
 DB_HOST = os.getenv("TT_DB_HOST")
 DB_PORT = os.getenv("TT_DB_PORT")
