@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container" style=" width: 1000px; margin: 0 auto;">
+    <div class="row">
+        <!-- Left col -->
+       <div class="col-sm-2 col-md-2 col-lg-2 col-xs-2">
+            <!--drop down-->
+            <br><br><br>
+            <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                select query
+                </button>
+                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                    <a class="dropdown-item" href="cast_group">Cast Group</a>
+                    <a class="dropdown-item" href="cast_role">Cast Role</a>
+                    <a class="dropdown-item" href="act">Act</a>
+                    <a class="dropdown-item" href="scene">Scene</a>
+                    <a class="dropdown-item" href="speech">Speech</a>
+                    <a class="dropdown-item" href="line">Line</a>
+                    <a class="dropdown-item" href="token">Token</a>
+                </div>
+            </div>
+       </div>
+
+       <!-- Right col -->
+       <div class="col-sm-10 col-md-10 col-lg-10 col-xs-10">
+            <!-- search bar -->
+            <br><br><br>
+            <form class="d-flex" action="../result/act" method="POST">
+                <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search" name="query">
+                <button class="btn btn-outline-success" type="submit">Search</button>
+            </form>
+       </div>
+    </div>
+</div>
+
+
+{% endblock %}
