@@ -27,16 +27,9 @@ paths:
           text/plain:
             schema:
               type: string
-#              $ref: '#/components/schemas/TEI_string'
       tags:
         - ingest
       responses:
-#        200:
-#          description: bla
-#          content:
-#            application/json:
-#              schema:
-#                $ref: ""
         405:
           description: Invalid input
           content: {}
