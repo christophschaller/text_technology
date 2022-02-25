@@ -17,8 +17,6 @@ from ingestion.tei_sql_schema import Base
 load_dotenv("app.env")
 # get env vars specifying database connection
 DB_USER = os.getenv("TT_DB_USER")
-print(os.getenv("TT_DB_USER"))
-print(DB_USER)
 DB_PASSWORD = os.getenv("TT_DB_PASSWORD")
 DB_HOST = os.getenv("TT_DB_HOST")
 DB_PORT = os.getenv("TT_DB_PORT")
@@ -53,4 +51,6 @@ if __name__ == '__main__':
         specification_dir=APP_SPEC_DIR
     )
     app.add_api(APP_SPEC_FILE)
+    # TODO: it would probably be great to run this with gunicorn instead of the flask
+    #  wsgi
     app.run(port=APP_PORT)

@@ -10,13 +10,13 @@ from ingestion.tei_xml_parser import TeiXmlParser
 from ingestion.tei_sql_schema import Base
 
 # load env vars from .env file
-load_dotenv("app.env")
+load_dotenv("_app.env")
 # get env vars specifying database connection
 DB_USER = os.getenv("TT_DB_USER")
 DB_PASSWORD = os.getenv("TT_DB_PASSWORD")
 DB_HOST = os.getenv("TT_DB_HOST")
 DB_PORT = os.getenv("TT_DB_PORT")
-DB_NAME = os.getenv("TT_DB_NAME")
+DB_NAME = os.getenv("TT_DB_NAME", "verona")
 
 # connect to db and initialize parser
 PARSER = TeiXmlParser(

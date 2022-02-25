@@ -15,7 +15,8 @@ class DatabaseConnector:
     Class managing the connection to the database.
     """
 
-    def __init__(self, user: str, password: str, host: str, port: str, database: str):
+    def __init__(self, user: str = None, password: str = None, host: str = None,
+                 port: str = None, database: str = None):
         """
         Args:
             user: username to connect to the database service
@@ -40,10 +41,11 @@ class DatabaseConnector:
         Initiate the connection to the database service and populate the necessary
         obj variables
         """
-        self.engine = sa.create_engine(
-            f"mariadb+mariadbconnector://{self.user}:{self.password}@"
-            f"{self.host}:{self.port}/{self.database}"
-        )
+        uri = f"sqlite:///../{self.database}.db"
+        if self.host:
+            uri = f"mariadb+mariadbconnector://{self.user}:{self.password}" \
+                  f"@{self.host}:{self.port}/{self.database}"
+        self.engine = sa.create_engine(uri)
 
         session = sessionmaker(self.engine)
         # session.configure(bind=self.engine)
