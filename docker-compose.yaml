@@ -1,13 +1,32 @@
 version: "3"
 
 services:
-#  ingestion:
-#
+  ingestion:
+    image: ingestion:latest
+    build:
+      context: ./ingestion
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      - mariadb
+    ports:
+      - "8080:8080"
+    env_file:
+      - ingestion/app.env
+    links:
+      - mariadb
+#  app:
+#    image: app:latest
+#    build:
+#      context: ./app
+#      dockerfile: Dockerfile
 #    restart: always
 #    depends_on:
 #      - mariadb
 #    ports:
-#      - '8080:80'
+#    - "5050:5050"
+#    env_file:
+#      - app/app.env
 #    links:
 #      - mariadb
   mariadb:
@@ -19,9 +38,6 @@ services:
       - mariadb_data:/var/lib/mysql/data
       - mariadb_logs:/var/lib/mysql/logs
       - mariadb_conf:/var/docker/mariadb/conf
-#      - ./data/mariadb_data:/var/lib/mysql/data
-#      - ./data/mariadb_logs:/var/lib/mysql/logs
-#      - ./data/mariadb_conf:/var/docker/mariadb/conf
     env_file:
       - mariadb.env
 volumes:
